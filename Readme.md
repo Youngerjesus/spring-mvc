@@ -3,7 +3,7 @@
 ***
 
 ## 목차
-[1.프론트 컨트롤러 패턴](#프론트-컨트롤러-패턴) <br/>
+[1. 프론트 컨트롤러 패턴](#프론트-컨트롤러-패턴) <br/>
 [2. Jar vs War](#Jar-vs-War) <br/> 
 [3. Lombok 설정](#Lombok-설정) <br/> 
 [4. @RestController vs @Controller](#@RestController-vs-@Controller) <br/>
