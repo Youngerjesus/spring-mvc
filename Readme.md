@@ -9,6 +9,8 @@
 [4. @RestController vs @Controller](#@RestController-vs-@Controller) <br/>
 [5. 로깅](#로깅) <br/> 
 [6. 요청 매핑](#요청-매핑) <br/> 
+[7. 요청 매핑 API 예시](#요청-매핑-API-예시) <br/> 
+[8. HTTP 요청 기본 헤더 조회](#HTTP-요청-기본-헤더-조회) <br/> 
 ***
 
 
@@ -97,7 +99,7 @@ HTTP 헤더의 Accept 타입에 따라 요청 매핑을 할 수 있다.
 예시는 다음과 같다.
 
 ```java
-		@RequestMapping(value = "/hello-basic", method = RequestMethod.GET)
+    @RequestMapping(value = "/hello-basic", method = RequestMethod.GET)
     public String helloBasic(){
         log.info("helloBasic");
         return "helloBasic";
@@ -157,4 +159,96 @@ HTTP 헤더의 Accept 타입에 따라 요청 매핑을 할 수 있다.
         return "ok";
     }
 ```
+
+*** 
+
+## 요청 매핑 API 예시 
+
+- 회원 목록 조회: GET `/users` 
+- 회원 등록: POST `/users` 
+- 회원 조회: GET `/users/{userId}`
+- 회원 수정: PATCH `/users/{userId}` 
+- 회원 삭제: DELETE `/users/{userId}`
+- 이렇게 만들고 Controller에서 @RequestMapping 을 통해 리소스 접근에 계층을 나누면 편하다. 
+
+```java
+@RestController
+@RequestMapping("/mapping/users")
+public class MappingClassController {
+
+    /*
+    - 회원 목록 조회: GET `/users`
+    - 회원 등록: POST `/users`
+    - 회원 조회: GET `/users/{userId}`
+    - 회원 수정: PATCH `/users/{userId}`
+    - 회원 삭제: DELETE `/users/{userId}`
+     */
+
+    @GetMapping
+    public String user(){
+        return "get Users";
+    }
+
+    @PostMapping
+    public String addUser(){
+        return "post User";
+    }
+
+    @GetMapping("/{userId}")
+    public String findUser(@PathVariable String userId){
+        return "get UserId=" + userId;
+    }
+
+    @PatchMapping("/{userId}")
+    public String updateUser(@PathVariable String userId){
+        return "update User=" + userId;
+    }
+
+    @DeleteMapping("/{userId}")
+    public String deleteUser(@PathVariable String userId){
+        return "delete User=" + userId;
+    }
+}
+```
+
+
+
+## HTTP 요청 기본 헤더 조회 
+
+HTTP 요청에서 헤더를 조회하는 방법
+
+```java
+@RestController
+public class RequestHeaderController {
+
+    @RequestMapping("/headers")
+    public String headers(HttpServletRequest request,
+                          HttpServletResponse response,
+                          HttpMethod httpMethod,
+                          Locale locale,
+                          @RequestHeader MultiValueMap<String, String> headerMap,
+                          @RequestHeader(value = "host", defaultValue = "test") String host,
+                          @CookieValue(value = "myCookie", required = false) String cookie){
+        log.info("request={}", request);
+        log.info("response={}", response);
+        log.info("httpMethod={}", httpMethod);
+        log.info("locale={}", locale);
+        log.info("headerMap={}", headerMap);
+        log.info("header Content-Type={}", headerMap.get("User-Agent"));
+        log.info("header host={}", host);
+        log.info("myCookie={}", cookie);
+        return "ok";
+    }
+}
+```
+- `MultiValueMap` 은 Map과 유사하지만 하나의 키에 여러 값을 받을 수 있다. HTTP header와 HTTP 쿼리 피라미터와 같이 하나의 키에 여러 값을 받을 때 사용한다. 
+
+  - `keyA=value1&keyA=value2` 가 쿼리 피라미티로 전달됐다고 했을 때 `List<String> values = map.get("keyA") ` 가 될 수 있다. 
+
+- Controller에서 여러가지 애노테이션으로 값을 받을 수 있는데 여기에 속성으로 defaultValue="test" 를 통해 값이 없을 때 가져올 기본 값을 설정할 수 있다.
+
+- 메소드 아규먼트로 받을 수 있는 값과 핸들러에서 리턴할 수 있는 값은 여기서 확인할 수 있다. https://docs.spring.io/spring-framework/docs/current/reference/html/web.html
+
+
+
 
