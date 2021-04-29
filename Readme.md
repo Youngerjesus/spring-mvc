@@ -249,6 +249,10 @@ public class RequestHeaderController {
 
 - 메소드 아규먼트로 받을 수 있는 값과 핸들러에서 리턴할 수 있는 값은 여기서 확인할 수 있다. https://docs.spring.io/spring-framework/docs/current/reference/html/web.html
 
+***
+
+## HTTP 요청 피라미터 
+
 
 
 
