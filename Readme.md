@@ -16,6 +16,10 @@
 [11. HTTP 요청 파라미터 @ModelAttribute](#HTTP-요청-파라미터-@ModelAttribute) <br/>
 [12. HTTP 요청 메시지 단순 텍스트](#HTTP-요청-메시지-단순-텍스트) <br/>
 [13. HTTP 요청 메시지 JSON](#HTTP-요청-메시지-JSON) <br/>
+[14. HTTP 응답 정적 리소스 뷰 템플릿](#HTTP-응답-정적-리소스-뷰-템플릿) <br>
+[15. HTTP 응답 메시지 바디에 직접 입력](#HTTP-응답-메시지-바디에-직접-입력) <br/>
+[16. HTTP 메시지 컨버터](#HTTP-메시지-컨버터)
+[17. 요청 매핑 핸들러 어댑터 구조](#요청-매핑-핸들러-어댑터-구조)
 ***
 
 
@@ -334,6 +338,95 @@ HTTP 에서 클라이언트 -> 서버로 데이터를 보내는 방법 중 HTTP 
 
 @ResponseBody 에노테이션이 붙어있다면 return 에 객체를 하면 그 값 그대로 HTTP Response Body에 쓰인다. 이 역할도 HttpMessageConverter에 의해 이뤄진다. 
 
+
+***
+
+## HTTP 응답 정적 리소스 뷰 템플릿
+
+스프링에서 응답 데이터를 만드는 방법은 크게 3가지이다. 
+  - 정적 리소스
+    - 웹 브라우저에서 정적인 HTML,css, js 를 제공할 땐 정적 리소스를 사용한다.
+    - 스프링 부트는 클래스패스의 다음 디렉토리에 있는 정적 리소스를 제공한다
+      - `/static`
+      - `/public`
+      - `/resources`
+      - `/META-INF/resources`
+      - `src/main/resources` 는 리소스를 보관하는 곳이고 또 클래스패스의 시작 경로이다. 따라서 다음 디렉토리에 리소스를 넣어두면 스프링 부트가 정적 리소스로 서비스를 제공한다. `src/main/resources/static`
+        - 예로 `src/main/resources/static/basic/hello-form.html` 파일이 존재한다면 웹 브라우저에서 다음과 같이 이용이 가능하다. `http://localhost:8080/basic/hello-form.html` 
+  - 뷰 템플릿 사용
+    - 웹 브라우저에서 동적인 HTML을 제공할 땐 뷰 템플릿을 사용한다. 
+    - HTML 뿐만 아니라 뷰 템플릿이 만들 수 있는 것이라면 뭐든 가능하다. 
+    - 뷰 템플릿 경로는 다음과 같다. `src/main/resources/templates` 
+    - 컨트롤러에서 String을 반환하는 경우에 `ResponseBody` 가 없다면 뷰 리졸버가 실행되어서 뷰를 찾고 렌더링 한다. `ResponseBody` 가 있다면 HTTP 메시지 바디에 직접 데이터를 넣고. 
+    - 컨트롤러에서 void를 반환하는 경우에 요청 URL을 참고해서 뷰 이름으로 사용한다. 이 방식은 명시성이 너무 떨어져서 사용하지는 않는다. 
+HTTP 메시지 사용
+  - HTTP API를 제공하는 경우에는 HTML이 아니라 데이터를 전달해야 하므로 HTTP 메시지 바디에 JSON 같은 형식으로 데이터를 실어 보낸다. 
+
+***
+
+## HTTP 응답 메시지 바디에 직접 입력 
+
+HTML이나 뷰 템플릿을 사용해도 HTTP 응답 메시지 바디에 HTML 데이터가 담겨서 전달된다. 여기서 말할 것은 정적 리소스나 뷰 템플릿을 거치지 않고 직접 HTTP 응답 메시지를 입력하는 방식이다. 
+
+ResponseEntity 를 사용하지 않더라도 @ResponseStatus 를 통해 상태 코드를 넣을 수 있다. 하지만 이는 동적으로 상태 코드를 넣는건 힘들다. 
+
+@ResponseBody 를 메소드마다 붙이는게 중복이라면 클래스 단에서 @RestController를 이용하면 된다. 
+
+***
+
+## HTTP 메시지 컨버터
+
+뷰 템플릿으로 HTML을 생성해서 응답하는 것이 아니라 HTTP API 처럼 JSON 데이터를 HTTP 메시지 바디에서 직접 읽거나 쓰는 경우 HTTP 메시지 컨버터를 이용하면 편하다. 
+
+@ResponseBody를 이용하면 HTTP 요청 바디에 직접 데이터를 쓰게 된다. 이게 어떻게 동작하는지 살펴보면 다음과 같다. 
+
+  1. @ResponseBody 를 보고 `viewResolver` 대신에 `HttpMessageConverter` 가 동작한다..
+  
+  2. 기본 문자처리는 `StringMessageConverter` 가 돌아가고 기본 객체처리는 `MappingJackson2HttpMessageConverter` 가 동작해서 메시지 바디에 넣어준다. 
+
+응답의 경우에는 클라이언트의 HTTP Accept 헤더 정보와 컨트롤러의 반환 타입을 조합해서 HTtpMessageConverter가 선택된다. 
+
+HTTP 메시지 컨버터는 HTTP 요청이나 HTTP 응답 둘 다 사용된다
+
+  - `canRead()` 나 `canWrite()` 메소드를 통해 메시지 컨버터가 해당 클래스(String, 객체, Byte[])나 미디어타입을 지원하는지 체크하고`read()` 나 `write()` 를 통해 메시지를 읽고 쓰는 기능을 지원한다. 
+
+스프링 부트의 기본 메시지 컨버터는 다음과 같다. 
+
+  - `ByteArrayHttpMessageConverter`
+    - 요청 데이터를 `byte[]` 로 받는다. 이때 `Content-Type` 가 어떤것이든 상관없다. 
+    - 요청 예) `@ReqeustBody byte[] data` 
+    - 응답 예) `@ResponseBody return byte[]` 쓰기 미디어타입은 `application/octet-stream`  이다. 
+  - `StringHttpMessageConverter`
+    - 요청 데이터를 `String` 으로 받는다. 이때 `Content-Type` 은 어떤것이든 상관없다. 
+    - 요청 예) `@RequestBody String data` 
+    - 응답 예) `@ResponseBody return "ok"` 쓰기 미디어타입은 `text/plain` 이다. 
+  - `MappingJackson2HttpMessageConverter` 
+    - 요청 데이터를 클래스 타입의 객체 또는 `HashMap` 으로 받는다. 이때 `Content-Type: application/json` 으로 요청을 해야한다.
+    - 요청 예) `@RequestBody HelloData data` 
+    - 응답 예) `@ResponseBody return helloData` 이고 쓰기 미디어타입은 `application/json` 이다.   
+  - 스프링 부트는 다양항 메시지 컨버터를 지원한다. 바이트로 변환할지 스트링으로 변환할지 JSON으로 변환할지 등등.
+
+***
+
+## 요청 매핑 핸들러 어댑터 구조 
+
+HTTP 메시지 컨버터는 스프링 MVC에서 어디쯤에서 사용되는 걸까? 
+
+스프링 MVC에서 처리과정을 보면 `DispatcherServlet` 이 핸들러 어댑터에서 핸들러(컨트롤러)를 호출할 때 쯤에 위치한다고 생각할 수 있다. 즉 모든 비밀은 에노테이션 기반의 컨트롤러, 그러니까 @RequestMapping 을 처리하는 핸들러 어댑터인 `RequestMappingHandlerAdapter` 가 이 일을 해준다. 
+
+`RequestMappingHandlerAdapter ` 처리과정
+  - 어떻게 컨트롤러는 다양한 매개변수를  받아서 처리할 수 있을까? (`HttpServletReqeust` `InputStream` `@RequestParam` `@RequestBody` 이런 것들 ) 이 역할을 해줄 수 있는게 `ArgumentResolver`  스프링은 `ArgumentResolver` 를 호출해서 30개가 넘는 파라미터들을 생성해줄 수 있다. 그리고 이런 파라미터들이 모두 준비가되면 컨트롤러에 전달해서 호출해준다. 
+  - `ArgumentResolver` 의 실제 이름은 `HandlerMethodArgumentResolver` 이다. 여기서 `supportsParameter()` 라는 메소드를 통해서 이 파라미터를 지원할 수 있는지 알 수 있다. 지원하면 `resolveArgument()` 메소드를 호출해서 실제 객체를 생성한다. 
+  - 원한다면 직접 이 인터페이스를 확장해서 `ArgumentResolver` 를 만들고 이를 컨트롤러에서 받을 수 있도록 할 수 있다. 
+
+`ReturnValueHandler` 란 뭘까?
+  - 컨트롤러에서 반환하는 종류는 여러개가 있다. 언제는 `ModelAndView` 를 이용해 동적 페이지를 줄 수 있고 String을 반환할 수도 있고 객체를 반환할 수 있다.  물론 `ResponseEntity` 도 가능하고. 
+  - 실제 이름은 `HandlerMethodReturnValueHandler` 이다. `ReturnValueHandler` 에서 컨트롤러의 응답을 보고 실제로 사용자에게 보낼 응답 메시지를 만들어준다. 
+
+그렇다면 이제 HTTP 메시지 컨버터는 어떤 일을 할까? 
+  - `@RequestBody` 를 보고 적절한 객체로 반환해주는게 `ArgumentResolver` 이다. 이 안에서 HTTP 메시지 컨버터가 작동을 하는 것. `@ResponseBody` 도 마찬가지. 여기서 HTTP 메시지 컨버터 를 이용해서 필요한 객체를 생성하는 것이다. 
+  - 실제 예로 `HttpEntityMethodProcessor` 를 보면 (이 객체도 `HandlerMethhodArgumentResolver` 를 부모로 가지고 있다.)  `supportParameter()` 메소드를 통해 이 파라미터를 생성할 수 있는지 체크를 하고. `supportReturnValue()` 메소드를 통해 이 응답 객체를 생성할 수 있는지 체크를 한다. 그 후 요청의 경우 `resolveArgument()` 라는 메소드 안에서 `readWithMessageConverters()` 메소드를 통해 메시지 컨버터를 이용해 요청 파라미터로 전달할 객체를 생성한다. 
+  - 실제 다양한 타입의 객체를 만들어서 컨트롤러에 전달하는게  `ArugmentResolver` 이고 여기 안에서 컨트롤러의 파라미터 정보를 읽고 클라이언트가 보낸 데이터 타입을 바탕으로 다양한 객체로 변환해주는게 메시지 컨버터이다. (`canRead()` `read()` `canWrite()` `write()` ) 
 
 
 
