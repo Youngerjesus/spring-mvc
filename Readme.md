@@ -3,26 +3,319 @@
 ***
 
 ## 목차
-[1. 프론트 컨트롤러 패턴](#프론트-컨트롤러-패턴) <br/>
-[2. Jar vs War](#Jar-vs-War) <br/> 
-[3. Lombok 설정](#Lombok-설정) <br/> 
-[4. @RestController vs @Controller](#@RestController-vs-@Controller) <br/>
-[5. 로깅](#로깅) <br/> 
-[6. 요청 매핑](#요청-매핑) <br/> 
-[7. 요청 매핑 API 예시](#요청-매핑-API-예시) <br/> 
-[8. HTTP 요청 기본 헤더 조회](#HTTP-요청-기본-헤더-조회) <br/> 
-[9. HTTP 요청 피라미터](#HTTP-요청-피라미터) <br/>
-[10. HTTP 요청 파라미터 - @RequestParam](#HTTP-요청-파라미터-@RequestParam) <br/>
-[11. HTTP 요청 파라미터 @ModelAttribute](#HTTP-요청-파라미터-@ModelAttribute) <br/>
-[12. HTTP 요청 메시지 단순 텍스트](#HTTP-요청-메시지-단순-텍스트) <br/>
-[13. HTTP 요청 메시지 JSON](#HTTP-요청-메시지-JSON) <br/>
-[14. HTTP 응답 정적 리소스 뷰 템플릿](#HTTP-응답-정적-리소스-뷰-템플릿) <br>
-[15. HTTP 응답 메시지 바디에 직접 입력](#HTTP-응답-메시지-바디에-직접-입력) <br/>
-[16. HTTP 메시지 컨버터](#HTTP-메시지-컨버터) <br/> 
-[17. 요청 매핑 핸들러 어댑터 구조](#요청-매핑-핸들러-어댑터-구조)
+[1.Spring MVC 전체 구조](#Spring-MVC-전체-구조) <br/>
+[2. 핸들러 매핑과 핸들러 어댑터](#핸들러-매핑과-핸들러-어댑터) <br/>
+[3. 뷰 리졸버](#뷰-리졸버) <br/> 
+[4. 프론트 컨트롤러 패턴](#프론트-컨트롤러-패턴) <br/>
+[5. Jar vs War](#Jar-vs-War) <br/> 
+[6. Lombok 설정](#Lombok-설정) <br/> 
+[7. @RestController vs @Controller](#@RestController-vs-@Controller) <br/>
+[8. 로깅](#로깅) <br/> 
+[9. 요청 매핑](#요청-매핑) <br/> 
+[10. 요청 매핑 API 예시](#요청-매핑-API-예시) <br/> 
+[11. HTTP 요청 기본 헤더 조회](#HTTP-요청-기본-헤더-조회) <br/> 
+[12. HTTP 요청 피라미터](#HTTP-요청-피라미터) <br/>
+[13. HTTP 요청 파라미터 - @RequestParam](#HTTP-요청-파라미터-@RequestParam) <br/>
+[14. HTTP 요청 파라미터 @ModelAttribute](#HTTP-요청-파라미터-@ModelAttribute) <br/>
+[15. HTTP 요청 메시지 단순 텍스트](#HTTP-요청-메시지-단순-텍스트) <br/>
+[16. HTTP 요청 메시지 JSON](#HTTP-요청-메시지-JSON) <br/>
+[17. HTTP 응답 정적 리소스 뷰 템플릿](#HTTP-응답-정적-리소스-뷰-템플릿) <br>
+[18. HTTP 응답 메시지 바디에 직접 입력](#HTTP-응답-메시지-바디에-직접-입력) <br/>
+[19. HTTP 메시지 컨버터](#HTTP-메시지-컨버터) <br/> 
+[20. 요청 매핑 핸들러 어댑터 구조](#요청-매핑-핸들러-어댑터-구조)
 ***
 
+## Spring MVC 전체 구조
 
+spring-mvc 에서는 프론트 컨트롤러 패턴을 구현한 DispatcherServlet 이 있다. 이런 DispathcerServlet 도 상속관계를 타고 들어가면 부모로 HttpServlet 이 있다. 
+
+스프링부트는 DispatcherSevlet 을 서블릿으로 자동으로 등록하면서 모든 경로(urlPattern = "/")에 대해서 매핑한다. 
+
+요청 흐름은 다은과 같다. 
+  - HttpServlet 은 요청을 받으면 service() 메소드를 호출한다. 이걸 DispatcherServlet 의 부모 클래스인 FrameworkServlet 에서 sevice() 메소드를 오버라이딩 해서 정의했고 이 안에서 DispatcherServlet이 요청을 처리할 알맞은 핸들러를 선택하고 호출하도록 하는 doDispatch() 메소드를 호출한다. 
+  - doDispatch() 메소드를 보면 핸들러 매핑 전략을 이용한 getHandler() 메소드를 통해서 요청을 처리할 적합한 핸들러를 찾는다 (컨트롤러를 찾는 걸 말하며 찾지 못하면 404 에러를 보내도록 설정되어있다.) 
+  - 그 후 실제 핸들러를 요청할 핸들러어뎁터를 찾기 위해서 getHandlerAdapter() 라는 메소드를 호출한다. (어댑터를 이용하는 이유는 요청을 처리할 오브젝트가 어떠한 것이라도 상관 없도록 하기위해 이를 연결해줄 수 있는 존재가 필요하기 떄문에) 
+  - 그 후 HandlerAdpater의 handle() 메소드를 통해 실제 요청할 핸들러를 호출해서 처리하도록 한다. (인터셉트 기능은 빼고 설명한 것) 이떄 뷰를 주는 요청이였다면 ModelAndView 가 리턴이 되고 processDisatchResult() 메소드 안에서 render() 메소드를 통해 `ViewResolver` 가 렌더링 역할을 하는 뷰 객체를 반환해주고 이 뷰를 통해서 렌더링한다. 
+
+주요 인터페이스 목록은 다음과 같다.
+  - 핸들러 매핑: `org.springframework.web.servlet.HandleMappiong`
+  - 핸들러 어뎁터: `org.springframework.web.servlet.HandlerAdapter`
+  - 뷰 리졸버: `org.springframework.web.servlet.ViewResolver`
+  - 뷰: `org.springframework.web.servlet.View`
+
+##### doDispatch()
+
+```java
+protected void doDispatch(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        HttpServletRequest processedRequest = request;
+        HandlerExecutionChain mappedHandler = null;
+        boolean multipartRequestParsed = false;
+        WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
+
+        try {
+            try {
+                ModelAndView mv = null;
+                Object dispatchException = null;
+
+                try {
+                    processedRequest = this.checkMultipart(request);
+                    multipartRequestParsed = processedRequest != request;
+                    mappedHandler = this.getHandler(processedRequest);
+                    if (mappedHandler == null) {
+                        this.noHandlerFound(processedRequest, response);
+                        return;
+                    }
+
+                    HandlerAdapter ha = this.getHandlerAdapter(mappedHandler.getHandler());
+                    String method = request.getMethod();
+                    boolean isGet = "GET".equals(method);
+                    if (isGet || "HEAD".equals(method)) {
+                        long lastModified = ha.getLastModified(request, mappedHandler.getHandler());
+                        if ((new ServletWebRequest(request, response)).checkNotModified(lastModified) && isGet) {
+                            return;
+                        }
+                    }
+
+                    if (!mappedHandler.applyPreHandle(processedRequest, response)) {
+                        return;
+                    }
+
+                    mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
+                    if (asyncManager.isConcurrentHandlingStarted()) {
+                        return;
+                    }
+
+                    this.applyDefaultViewName(processedRequest, mv);
+                    mappedHandler.applyPostHandle(processedRequest, response, mv);
+                } catch (Exception var20) {
+                    dispatchException = var20;
+                } catch (Throwable var21) {
+                    dispatchException = new NestedServletException("Handler dispatch failed", var21);
+                }
+
+                this.processDispatchResult(processedRequest, response, mappedHandler, mv, (Exception)dispatchException);
+            } catch (Exception var22) {
+                this.triggerAfterCompletion(processedRequest, response, mappedHandler, var22);
+            } catch (Throwable var23) {
+                this.triggerAfterCompletion(processedRequest, response, mappedHandler, new NestedServletException("Handler processing failed", var23));
+            }
+
+        } finally {
+            if (asyncManager.isConcurrentHandlingStarted()) {
+                if (mappedHandler != null) {
+                    mappedHandler.applyAfterConcurrentHandlingStarted(processedRequest, response);
+                }
+            } else if (multipartRequestParsed) {
+                this.cleanupMultipart(processedRequest);
+            }
+
+        }
+    }
+```
+
+
+
+##### getHandler()
+
+```java
+@Nullable
+    protected HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
+        if (this.handlerMappings != null) {
+            Iterator var2 = this.handlerMappings.iterator();
+
+            while(var2.hasNext()) {
+                HandlerMapping mapping = (HandlerMapping)var2.next();
+                HandlerExecutionChain handler = mapping.getHandler(request);
+                if (handler != null) {
+                    return handler;
+                }
+            }
+        }
+
+        return null;
+    }
+```
+
+
+
+##### getHandlerAdapter()
+
+```java
+protected HandlerAdapter getHandlerAdapter(Object handler) throws ServletException {
+        if (this.handlerAdapters != null) {
+            Iterator var2 = this.handlerAdapters.iterator();
+
+            while(var2.hasNext()) {
+                HandlerAdapter adapter = (HandlerAdapter)var2.next();
+                if (adapter.supports(handler)) {
+                    return adapter;
+                }
+            }
+        }
+
+        throw new ServletException("No adapter for handler [" + handler + "]: The DispatcherServlet configuration needs to include a HandlerAdapter that supports this handler");
+    }
+```
+
+
+
+##### handlerAdapter.handle()
+
+```java
+// AbstractHandlerMethodAdapter.class
+@Nullable
+    public final ModelAndView handle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        return this.handleInternal(request, response, (HandlerMethod)handler);
+    }
+
+
+// RequestMappingHandlerAdapter.class
+protected ModelAndView handleInternal(HttpServletRequest request, HttpServletResponse response, HandlerMethod handlerMethod) throws Exception {
+        this.checkRequest(request);
+        ModelAndView mav;
+        if (this.synchronizeOnSession) {
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                Object mutex = WebUtils.getSessionMutex(session);
+                synchronized(mutex) {
+                    mav = this.invokeHandlerMethod(request, response, handlerMethod);
+                }
+            } else {
+                mav = this.invokeHandlerMethod(request, response, handlerMethod);
+            }
+        } else {
+            mav = this.invokeHandlerMethod(request, response, handlerMethod);
+        }
+
+        if (!response.containsHeader("Cache-Control")) {
+            if (this.getSessionAttributesHandler(handlerMethod).hasSessionAttributes()) {
+                this.applyCacheSeconds(response, this.cacheSecondsForSessionAttributeHandlers);
+            } else {
+                this.prepareResponse(response);
+            }
+        }
+
+        return mav;
+    }
+```
+
+- `invokeHandlerMethod()` 내부에서 `ArgumentResolver` 가 핸들러에서 처리할 적절한 객체를 생성해준다. 
+
+
+
+##### processDispatchResult()
+
+```java
+private void processDispatchResult(HttpServletRequest request, HttpServletResponse response, @Nullable HandlerExecutionChain mappedHandler, @Nullable ModelAndView mv, @Nullable Exception exception) throws Exception {
+        boolean errorView = false;
+        if (exception != null) {
+            if (exception instanceof ModelAndViewDefiningException) {
+                this.logger.debug("ModelAndViewDefiningException encountered", exception);
+                mv = ((ModelAndViewDefiningException)exception).getModelAndView();
+            } else {
+                Object handler = mappedHandler != null ? mappedHandler.getHandler() : null;
+                mv = this.processHandlerException(request, response, handler, exception);
+                errorView = mv != null;
+            }
+        }
+
+        if (mv != null && !mv.wasCleared()) {
+            this.render(mv, request, response);
+            if (errorView) {
+                WebUtils.clearErrorRequestAttributes(request);
+            }
+        } else if (this.logger.isTraceEnabled()) {
+            this.logger.trace("No view rendering, null ModelAndView returned.");
+        }
+
+        if (!WebAsyncUtils.getAsyncManager(request).isConcurrentHandlingStarted()) {
+            if (mappedHandler != null) {
+                mappedHandler.triggerAfterCompletion(request, response, (Exception)null);
+            }
+
+        }
+    }
+```
+
+
+
+##### render()
+
+```java
+protected void render(ModelAndView mv, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        Locale locale = this.localeResolver != null ? this.localeResolver.resolveLocale(request) : request.getLocale();
+        response.setLocale(locale);
+        String viewName = mv.getViewName();
+        View view;
+        if (viewName != null) {
+            view = this.resolveViewName(viewName, mv.getModelInternal(), locale, request);
+            if (view == null) {
+                throw new ServletException("Could not resolve view with name '" + mv.getViewName() + "' in servlet with name '" + this.getServletName() + "'");
+            }
+        } else {
+            view = mv.getView();
+            if (view == null) {
+                throw new ServletException("ModelAndView [" + mv + "] neither contains a view name nor a View object in servlet with name '" + this.getServletName() + "'");
+            }
+        }
+
+        if (this.logger.isTraceEnabled()) {
+            this.logger.trace("Rendering view [" + view + "] ");
+        }
+
+        try {
+            if (mv.getStatus() != null) {
+                response.setStatus(mv.getStatus().value());
+            }
+
+            view.render(mv.getModelInternal(), request, response);
+        } catch (Exception var8) {
+            if (this.logger.isDebugEnabled()) {
+                this.logger.debug("Error rendering view [" + view + "]", var8);
+            }
+
+            throw var8;
+        }
+    }
+```
+
+***
+
+## 핸들러 매핑과 핸들러 어댑터
+
+핸들러 매핑과 핸들러 어댑터가 어떤 것들이 있는지 알아보자. 지금은 사용하지 않지만 과거에 사용했던 것들도 조사해보자.
+
+핸들러 매핑 중 하나는 스프링 빈의 이름으로 핸들러를 찾을 수 있도록 한다. 
+  - 예) 요청 url이 `/springmvc/old-controller` 라고 하면 스프링 빈의 이름 중에 `/springmvc/old-controller` 가 있는지 찾아본다. 
+
+핸들러 어댑터 중 하나는 `Controller` 인터페이스를 구현하고 있는 오브젝트를 실행시킬 수 있는 것이 있다. 
+
+스프링 부트를 쓰면 자동으로 등록해주는 핸들러 매핑과 핸들러 어댑터가 있다.
+  - 핸들러 매핑
+    - 0 = `RequestMappingHandlerMapping` : 에노테이션 기반의 컨트롤러인 @RequestMapping이 붙은 컨트롤러에서 url과 HTTP.METHOD 를 기반으로 핸들러를 찾아준다.
+    - 1 = `BeanNameUrlHandlerMapping` : 스프링 빈의 이름으로 핸들러를 찾아준다. 이때 스프링 빈의 이름과 url의 이름이 같아야 한다. 
+  - 핸들러 어댑터
+    - 0  = `RequestMappingHandlerAdapter` 에노테이션 기반의 컨트롤러인 @RequestMapping이 붙은 컨트롤러를 호출해주는 역할을 한다. 
+    - 1 = `HttpRequestHandlerAdapter` HttpReqeustHandler 라는 인터페이스를 구현하고 있는 컨트롤러를 호출해주는 역할을 한다. 
+    - 2 = `SimpleControllerHandlerAdapter` Controller 인터페이스를 구현하고 있는 컨트롤러를 호출해준다. 
+
+실행 과정을 보면 다음과 같다. 
+  - DispathcherServlet 에서 getHandler() 메소드를 호출하면 핸들러 매핑을 기반으로 핸들러를 찾는다. 
+  - 그 후 DispatcherServlet 에서 getHandlerAdpater() 메소드를 호출해서 이 핸들러를 호출해줄 수 있는 핸들러 어댑터를 찾는다. 여기서 좀 더 자세하게 내려가면 HandlerAdatper의 `supports()` 메소드를 통해서 이 핸들러를 호출할 수 있는 어댑터가 맞는지 검사한다. 
+  - 그 후 DispatcherServlet 에서 핸들러 어댑터를 찾았다면 핸들러 어댑터를 handle() 메소드를 통해 핸들러를 호출하게 되고 결과를 가져오게 된다. 
+  - 이 프로젝트에 있는 `OldController` 예제를 통해서 보면 다음과 같다. 
+    - `HandlerMapping` : `BeanNameUrlHandlerMapping`
+    - `HandlerAdapter` : `SimpleControllerHandlerAdapter` 
+
+***
+
+## 뷰 리졸버 
+
+
+
+
+
+*** 
 ## 프론트 컨트롤러 패턴 
 
 공통 처리나 반복적인 행위들을 해줄 수 있는 프론트 컨트롤러가 Spring Mvc에서 필요하다. 이 프론트 컨트롤러가 실행되고 난 후 각 요청에 맞는 세부적인 컨트롤러를 호출하는 방식으로 동작한다. 뭐 예를들면 뷰를 렌더링 해주는 것들이 있다. 프론트 컨트롤러가 없다면 매 컨트롤러마다 이런 공통 로직들을 다 입력해줘야한다. 
