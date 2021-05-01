@@ -311,6 +311,28 @@ protected void render(ModelAndView mv, HttpServletRequest request, HttpServletRe
 
 ## 뷰 리졸버 
 
+뷰 리졸버가 찾을 뷰의 경로를 조금 수정하고 싶다면 `application.properties` 에서 수정하면 된다. 
+
+  - `spring.mvc.view.prefix=/WEB-INF/views` 뷰 파일을 클래스 패스의 `/WEB-iNF/views` 에 두고 싶다면 이렇게 하면 된다.
+  - `spring.mvc.view.suffix=.jsp` 를 통해서 html 파일 확장자가 아닌 다른 확장자를 쓸려면 이렇게 하면 된다. 
+  - 이렇게 설정해주면 스프링 부트가 등록할 뷰 리졸버인 `InternalResourceViewResolver` 에 설정을 해준다. 
+
+스프링 부트가 자동 등록해주는 뷰 리졸버를 일부만 보자
+
+  - 1 = `BeanNameViewResolver` : 빈 이름으로 뷰를 찾아서 반환해준다. 
+  - 2 = `InternalResourceViewResolver` : `spring.mvc.view.suiffix` 나 `spring.mvc.view.prefix` 에 설정한 정보를 바탕으로 뷰를 반환해준다. `InternalResourceViewResolver` 는 내부에서 뷰를 찾을 수 있는 뷰 리졸버이다. 
+
+처리 과정을 보면 다음과 같다.
+
+  - 컨트롤러에서 ModelAndView 를 리턴해주는데 여기에 뷰의 이름도 같이 있다. 
+  - DispatcherServlet 의 render() 메소드에서 이 뷰 이름으로 뷰를 찾을 수 있는 뷰 리졸버를 찾는다. 
+  - 찾은 뷰 리졸버를 바탕으로 뷰 객체를 생성하고 렌더링한다. 
+
+  
+
+
+
+
 
 *** 
 ## 프론트 컨트롤러 패턴 
