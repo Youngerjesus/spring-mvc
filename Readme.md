@@ -312,9 +312,6 @@ protected void render(ModelAndView mv, HttpServletRequest request, HttpServletRe
 ## 뷰 리졸버 
 
 
-
-
-
 *** 
 ## 프론트 컨트롤러 패턴 
 
