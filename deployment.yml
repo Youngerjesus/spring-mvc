@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-mvc-app
+spec:
+  selector:
+    matchLabels:
+      app: spring-mvc-app
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: spring-mvc-app
+    spec:
+      containers:
+        - name: spring-mvc-app
+          image: gcr.io/mdag-community/spring-mvc
+          ports:
+            - containerPort: 8080
