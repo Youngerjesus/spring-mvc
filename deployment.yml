@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
         - name: spring-mvc
-          image: gcr.io/mdag-community/spring-mvc@sha256:aa0e76ee66042d47f9bf308c4661699f71c608d8003e0b28b0545751cba76b1d
+          image: gcr.io/mdag-community/spring-mvc@sha256:c7c2132d7294067f3b3c38fd64e5198ace0a2d5bb8f6bfb1115e84b68b42d9fb
           ports:
             - containerPort: 8080

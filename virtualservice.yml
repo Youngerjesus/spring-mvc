@@ -11,7 +11,8 @@ spec:
     - match:
         - uri:
             prefix: /api/spring-mvc
-
+      rewrite:
+          uri: /
       route:
         - destination:
             host: spring-mvc
