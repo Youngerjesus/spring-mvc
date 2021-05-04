@@ -625,6 +625,8 @@ public class RequestHeaderController {
 
 - 그리고 요청 파리미터가 잘못 입력되서 `BindException` 이 생길 수 있다. 이를 Validation 에서 하도록 관리해야 한다. 
 
+또 공통적으로 참고해야 하는 모델 정보가 있다면 컨트롤러에서 @ModelAttribute 메소드를 만들어서 정의할 수 있다. 
+
 ***
 
 ## HTTP 요청 메시지 단순 텍스트 
