@@ -1,5 +1,7 @@
 # Spring Mvc 
 
+https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc-ann-exceptionhandler-args)
+   
 ***
 
 ## 목차
@@ -22,7 +24,10 @@
 [17. HTTP 응답 정적 리소스 뷰 템플릿](#HTTP-응답-정적-리소스-뷰-템플릿) <br>
 [18. HTTP 응답 메시지 바디에 직접 입력](#HTTP-응답-메시지-바디에-직접-입력) <br/>
 [19. HTTP 메시지 컨버터](#HTTP-메시지-컨버터) <br/> 
-[20. 요청 매핑 핸들러 어댑터 구조](#요청-매핑-핸들러-어댑터-구조)
+[20. 요청 매핑 핸들러 어댑터 구조](#요청-매핑-핸들러-어댑터-구조) <br/>
+[21. Multipart Resolver](#Multipart-Resolver)
+[22. 예외 처리 핸들러](#예외-처리-핸들러)
+
 ***
 
 ## Spring MVC 전체 구조
@@ -740,5 +745,30 @@ HTTP 메시지 컨버터는 스프링 MVC에서 어디쯤에서 사용되는 걸
   - 실제 예로 `HttpEntityMethodProcessor` 를 보면 (이 객체도 `HandlerMethhodArgumentResolver` 를 부모로 가지고 있다.)  `supportParameter()` 메소드를 통해 이 파라미터를 생성할 수 있는지 체크를 하고. `supportReturnValue()` 메소드를 통해 이 응답 객체를 생성할 수 있는지 체크를 한다. 그 후 요청의 경우 `resolveArgument()` 라는 메소드 안에서 `readWithMessageConverters()` 메소드를 통해 메시지 컨버터를 이용해 요청 파라미터로 전달할 객체를 생성한다. 
   - 실제 다양한 타입의 객체를 만들어서 컨트롤러에 전달하는게  `ArugmentResolver` 이고 여기 안에서 컨트롤러의 파라미터 정보를 읽고 클라이언트가 보낸 데이터 타입을 바탕으로 다양한 객체로 변환해주는게 메시지 컨버터이다. (`canRead()` `read()` `canWrite()` `write()` ) 
 
+***
+
+## Multipart Resolver
+   
+파일업로드시 사용하는 메소드 아규먼트로 이를 사용할라면 MultipartResolver 빈이 설정 되어 있어야 사용할 수 있다. 
+
+스프링 부트에서는 기본적으로 MultipartResolver 를 빈으로 제공해준다.
+
+POST multipart/form-data 요청에 들어있는 파일을 참조할 수 있다. 
+
+***
+
+## 예외 처리 핸들러 
+   
+spring-mvc 에서 직접 에러를 만들어서 발생시켰거나 자바에서 지원하는 에러가 발생했을때 우리가 정의한 핸들러로 처리해서 응답을 만들어 내는 것
+
+@ExceptionHandler 를 통해서 사용이 가능하다. 
+
+@ExceptionHandler 에서 받을 수 있는 Method Argument 로는 크게 해당 예외인 `ExceptionType` 과 예외가 발생한 메소드인 `HandlerMethod` 를 받을 수 있다. ModelAttribute 는 지원하지 않는다. 
+
+예외 처리 핸들러에서 여러개의 예외를 받아서 처리할 수 있다. 이때는 이들의 상위클래스로 둬야한다. 
+ 
+
+   
+   
 
 
