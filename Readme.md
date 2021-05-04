@@ -17,8 +17,8 @@ https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc
 [10. 요청 매핑 API 예시](#요청-매핑-API-예시) <br/> 
 [11. HTTP 요청 기본 헤더 조회](#HTTP-요청-기본-헤더-조회) <br/> 
 [12. HTTP 요청 피라미터](#HTTP-요청-피라미터) <br/>
-[13. HTTP 요청 파라미터 - @RequestParam](#HTTP-요청-파라미터-@RequestParam) <br/>
-[14. HTTP 요청 파라미터 @ModelAttribute](#HTTP-요청-파라미터-@ModelAttribute) <br/>
+[13. HTTP 요청 파라미터 RequestParam](#HTTP-요청-파라미터-RequestParam) <br/>
+[14. HTTP 요청 파라미터 ModelAttribute](#HTTP-요청-파라미터-ModelAttribute) <br/>
 [15. HTTP 요청 메시지 단순 텍스트](#HTTP-요청-메시지-단순-텍스트) <br/>
 [16. HTTP 요청 메시지 JSON](#HTTP-요청-메시지-JSON) <br/>
 [17. HTTP 응답 정적 리소스 뷰 템플릿](#HTTP-응답-정적-리소스-뷰-템플릿) <br>
