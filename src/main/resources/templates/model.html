@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Model</title>
+</head>
+<body>
+  <div th:if="${subject}">
+      <h2 th:text="${subject}"></h2>
+  </div>
+  <div th:if="${category}">
+      <h2 th:text="${category}"></h2>
+  </div>
+</body>
+</html>
