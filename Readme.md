@@ -25,8 +25,8 @@ https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc
 [18. HTTP 응답 메시지 바디에 직접 입력](#HTTP-응답-메시지-바디에-직접-입력) <br/>
 [19. HTTP 메시지 컨버터](#HTTP-메시지-컨버터) <br/> 
 [20. 요청 매핑 핸들러 어댑터 구조](#요청-매핑-핸들러-어댑터-구조) <br/>
-[21. Multipart Resolver](#Multipart-Resolver)
-[22. 예외 처리 핸들러](#예외-처리-핸들러)
+[21. Multipart Resolver](#Multipart-Resolver) <br/>
+[22. 예외 처리 핸들러](#예외-처리-핸들러) <br/> 
 
 ***
 
