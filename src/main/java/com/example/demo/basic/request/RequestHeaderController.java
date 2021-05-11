@@ -1,5 +1,6 @@
 package com.example.demo.basic.request;
 
+import com.example.demo.sample.domain.Member;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.MultiValueMap;
@@ -38,5 +39,10 @@ public class RequestHeaderController {
     public String headers(@RequestHeader Map<String, String> header){
         return String.format("user-id: %s, user-nickname: %s, user-role: %s",
                             header.get("user-id"), header.get("user-nickname"), header.get("user-role"));
+    }
+
+    @GetMapping("/member")
+    public String member(Member member){
+        return member.toString();
     }
 }
