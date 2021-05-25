@@ -7,6 +7,7 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Iterator;
 
 public class MemberArgumentResolver implements HandlerMethodArgumentResolver {
@@ -17,24 +18,17 @@ public class MemberArgumentResolver implements HandlerMethodArgumentResolver {
     }
 
     @Override
-    public Object resolveArgument(MethodParameter methodParameter, ModelAndViewContainer modelAndViewContainer, NativeWebRequest nativeWebRequest, WebDataBinderFactory webDataBinderFactory) throws Exception {
+    public Member resolveArgument(MethodParameter methodParameter, ModelAndViewContainer modelAndViewContainer, NativeWebRequest nativeWebRequest, WebDataBinderFactory webDataBinderFactory) throws Exception {
         Member member = new Member();
-        Iterator<String> headerNames = nativeWebRequest.getHeaderNames();
+        HttpServletRequest request = (HttpServletRequest) nativeWebRequest.getNativeRequest();
 
-        while (headerNames.hasNext()){
-            String headerKey = headerNames.next();
+        String memberNickName = request.getHeader("user-nickname");
+        String memberId = request.getHeader("user-id");
+        String memberRole = request.getHeader("user-role");
 
-            if(headerKey == "user-id"){
-                member.setId(Long.valueOf(nativeWebRequest.getHeader(headerKey)));
-            }
-            if(headerKey == "user-nickname"){
-                member.setNickname(nativeWebRequest.getHeader(headerKey));
-            }
-            if(headerKey == "user-role"){
-                member.setRole(nativeWebRequest.getHeader(headerKey));
-            }
-        }
-
+        member.setRole(memberRole);
+        member.setNickname(memberNickName);
+        member.setId(Long.valueOf(memberId));
         return member;
     }
 }
