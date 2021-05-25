@@ -27,6 +27,7 @@ https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc
 [20. 요청 매핑 핸들러 어댑터 구조](#요청-매핑-핸들러-어댑터-구조) <br/>
 [21. Multipart Resolver](#Multipart-Resolver) <br/>
 [22. 예외 처리 핸들러](#예외-처리-핸들러) <br/> 
+[23. @InitBinder](#@InitBinder) <br/> 
 
 ***
 
@@ -770,7 +771,54 @@ spring-mvc 에서 직접 에러를 만들어서 발생시켰거나 자바에서 
 예외 처리 핸들러에서 여러개의 예외를 받아서 처리할 수 있다. 이때는 이들의 상위클래스로 둬야한다. 
  
 
-   
+***
+
+## @InitBinder
+
+특정 컨트롤러에서 데이터를 바인딩하고 검증할 때 사용하는 것 
+
+##### @InitBinder 기본 설정 
+```java
+// @InitBinder 에 이름을 입력하면 컨트롤러가 받는 객체중에 특정 객체만 Binding 을 하거나 Validate 를 적용시킬 수 있다.
+@InitBinder("Event")
+public void initBinder(WebDataBinder webDataBinder){
+    // 객체의 프로퍼티 중 id라는 필드가 있는 경우 필터링을 해준다.
+    webDataBinder.setDisallowedFields("id");
+
+    // setAllowedFields()는 허용할 필드명을 명시하고 그 값들만 허용해준다. 
+    webDataBinder.setAllowedFields("id");
+
+    // 특정 Formatter를 등록해줄 수 있다.  
+    webDataBinder.addCustomFormatter();
+
+    // 특정 CustomEditor 등록해줄 수 있다. 
+    webDataBinder.registerCustomEditor(Date.class, new CustomDateEditor(new ISO8601DateFormat(), false));
+
+    // 특정 Validator를 등록해줄 수 있다. 
+    webDataBinder.addValidators(new EventValidator());
+}
+```
+ 
+##### Validator Example - EventValidator
+```java
+public class EventValidator implements Validator {
+    @Override
+    public boolean supports(Class<?> clazz) {
+        // 어떤 도메인에 해당 validate를 지원할 것인지 명시해준다.
+        return Event.class.isAssignableFrom(clazz);
+        or
+        return Event.class.equals(clazz);
+    }
+
+    @Override
+    public void validate(Object o, Errors errors) {
+        Event event = (Event) o;
+        if (event.getName() == "goodgid") {
+            errors.rejectValue("name", event.getName() + " is wrongValue");
+        }
+    }
+}
+```
    
 
 
