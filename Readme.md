@@ -5,29 +5,51 @@ https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc
 ***
 
 ## 목차
-[1. Spring MVC 전체 구조](#Spring-MVC-전체-구조) <br/>
-[2. 핸들러 매핑과 핸들러 어댑터](#핸들러-매핑과-핸들러-어댑터) <br/>
-[3. 뷰 리졸버](#뷰-리졸버) <br/> 
-[4. 프론트 컨트롤러 패턴](#프론트-컨트롤러-패턴) <br/>
-[5. Jar vs War](#Jar-vs-War) <br/> 
-[6. Lombok 설정](#Lombok-설정) <br/> 
-[7. @RestController vs @Controller](#@RestController-vs-@Controller) <br/>
-[8. 로깅](#로깅) <br/> 
-[9. 요청 매핑](#요청-매핑) <br/> 
-[10. 요청 매핑 API 예시](#요청-매핑-API-예시) <br/> 
-[11. HTTP 요청 기본 헤더 조회](#HTTP-요청-기본-헤더-조회) <br/> 
-[12. HTTP 요청 피라미터](#HTTP-요청-피라미터) <br/>
-[13. HTTP 요청 파라미터 RequestParam](#HTTP-요청-파라미터-RequestParam) <br/>
-[14. HTTP 요청 파라미터 ModelAttribute](#HTTP-요청-파라미터-ModelAttribute) <br/>
-[15. HTTP 요청 메시지 단순 텍스트](#HTTP-요청-메시지-단순-텍스트) <br/>
-[16. HTTP 요청 메시지 JSON](#HTTP-요청-메시지-JSON) <br/>
-[17. HTTP 응답 정적 리소스 뷰 템플릿](#HTTP-응답-정적-리소스-뷰-템플릿) <br>
-[18. HTTP 응답 메시지 바디에 직접 입력](#HTTP-응답-메시지-바디에-직접-입력) <br/>
-[19. HTTP 메시지 컨버터](#HTTP-메시지-컨버터) <br/> 
-[20. 요청 매핑 핸들러 어댑터 구조](#요청-매핑-핸들러-어댑터-구조) <br/>
-[21. Multipart Resolver](#Multipart-Resolver) <br/>
-[22. 예외 처리 핸들러](#예외-처리-핸들러) <br/> 
-[23. @InitBinder](#@InitBinder) <br/> 
+- [Spring MVC 전체 구조](#Spring-MVC-전체-구조) <br/>
+
+- [핸들러 매핑과 핸들러 어댑터](#핸들러-매핑과-핸들러-어댑터) <br/>
+
+- [뷰 리졸버](#뷰-리졸버) <br/> 
+
+- [프론트 컨트롤러 패턴](#프론트-컨트롤러-패턴) <br/>
+
+- [Jar vs War](#Jar-vs-War) <br/> 
+
+- [Lombok 설정](#Lombok-설정) <br/> 
+
+- [@RestController vs @Controller](#@RestController-vs-@Controller) <br/>
+
+- [로깅](#로깅) <br/> 
+
+- [요청 매핑](#요청-매핑) <br/> 
+
+- [요청 매핑 API 예시](#요청-매핑-API-예시) <br/> 
+
+- [HTTP 요청 기본 헤더 조회](#HTTP-요청-기본-헤더-조회) <br/> 
+
+- [HTTP 요청 피라미터](#HTTP-요청-피라미터) <br/>
+
+- [HTTP 요청 파라미터 RequestParam](#HTTP-요청-파라미터-RequestParam) <br/>
+
+- [HTTP 요청 파라미터 ModelAttribute](#HTTP-요청-파라미터-ModelAttribute) <br/>
+
+- [HTTP 요청 메시지 단순 텍스트](#HTTP-요청-메시지-단순-텍스트) <br/>
+
+- [HTTP 요청 메시지 JSON](#HTTP-요청-메시지-JSON) <br/>
+
+- [HTTP 응답 정적 리소스 뷰 템플릿](#HTTP-응답-정적-리소스-뷰-템플릿) <br>
+
+- [HTTP 응답 메시지 바디에 직접 입력](#HTTP-응답-메시지-바디에-직접-입력) <br/>
+
+- [HTTP 메시지 컨버터](#HTTP-메시지-컨버터) <br/> 
+
+- [요청 매핑 핸들러 어댑터 구조](#요청-매핑-핸들러-어댑터-구조) <br/>
+
+- [Multipart Resolver](#Multipart-Resolver) <br/>
+
+- [예외 처리 핸들러](#예외-처리-핸들러) <br/> 
+
+- [@InitBinder](#@InitBinder) <br/> 
 
 ***
 
