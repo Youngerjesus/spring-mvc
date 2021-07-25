@@ -5,51 +5,55 @@ https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc
 ***
 
 ## 목차
-- [Spring MVC 전체 구조](#Spring-MVC-전체-구조) <br/>
+- [Spring MVC 전체 구조](#Spring-MVC-전체-구조)
 
-- [핸들러 매핑과 핸들러 어댑터](#핸들러-매핑과-핸들러-어댑터) <br/>
+- [핸들러 매핑과 핸들러 어댑터](#핸들러-매핑과-핸들러-어댑터)
 
-- [뷰 리졸버](#뷰-리졸버) <br/> 
+- [뷰 리졸버](#뷰-리졸버)
 
-- [프론트 컨트롤러 패턴](#프론트-컨트롤러-패턴) <br/>
+- [프론트 컨트롤러 패턴](#프론트-컨트롤러-패턴)
 
-- [Jar vs War](#Jar-vs-War) <br/> 
+- [Jar vs War](#Jar-vs-War)
 
-- [Lombok 설정](#Lombok-설정) <br/> 
+- [Lombok 설정](#Lombok-설정)
 
-- [@RestController vs @Controller](#@RestController-vs-@Controller) <br/>
+- [@RestController vs @Controller](#@RestController-vs-@Controller)
 
-- [로깅](#로깅) <br/> 
+- [로깅](#로깅)
 
-- [요청 매핑](#요청-매핑) <br/> 
+- [요청 매핑](#요청-매핑)
 
-- [요청 매핑 API 예시](#요청-매핑-API-예시) <br/> 
+- [요청 매핑 API 예시](#요청-매핑-API-예시)
 
-- [HTTP 요청 기본 헤더 조회](#HTTP-요청-기본-헤더-조회) <br/> 
+- [HTTP 요청 기본 헤더 조회](#HTTP-요청-기본-헤더-조회) 
 
-- [HTTP 요청 피라미터](#HTTP-요청-피라미터) <br/>
+- [HTTP 요청 피라미터](#HTTP-요청-피라미터)
 
-- [HTTP 요청 파라미터 RequestParam](#HTTP-요청-파라미터-RequestParam) <br/>
+- [HTTP 요청 파라미터 RequestParam](#HTTP-요청-파라미터-RequestParam)
 
-- [HTTP 요청 파라미터 ModelAttribute](#HTTP-요청-파라미터-ModelAttribute) <br/>
+- [HTTP 요청 파라미터 ModelAttribute](#HTTP-요청-파라미터-ModelAttribute)
 
-- [HTTP 요청 메시지 단순 텍스트](#HTTP-요청-메시지-단순-텍스트) <br/>
+- [HTTP 요청 메시지 단순 텍스트](#HTTP-요청-메시지-단순-텍스트)
 
-- [HTTP 요청 메시지 JSON](#HTTP-요청-메시지-JSON) <br/>
+- [HTTP 요청 메시지 JSON](#HTTP-요청-메시지-JSON)
 
-- [HTTP 응답 정적 리소스 뷰 템플릿](#HTTP-응답-정적-리소스-뷰-템플릿) <br>
+- [HTTP 응답 정적 리소스 뷰 템플릿](#HTTP-응답-정적-리소스-뷰-템플릿)
 
-- [HTTP 응답 메시지 바디에 직접 입력](#HTTP-응답-메시지-바디에-직접-입력) <br/>
+- [HTTP 응답 메시지 바디에 직접 입력](#HTTP-응답-메시지-바디에-직접-입력)
 
-- [HTTP 메시지 컨버터](#HTTP-메시지-컨버터) <br/> 
+- [HTTP 메시지 컨버터](#HTTP-메시지-컨버터) 
 
-- [요청 매핑 핸들러 어댑터 구조](#요청-매핑-핸들러-어댑터-구조) <br/>
+- [요청 매핑 핸들러 어댑터 구조](#요청-매핑-핸들러-어댑터-구조)
 
-- [Multipart Resolver](#Multipart-Resolver) <br/>
+- [Multipart Resolver](#Multipart-Resolver)
 
-- [예외 처리 핸들러](#예외-처리-핸들러) <br/> 
+- [예외 처리 핸들러](#예외-처리-핸들러) 
 
-- [@InitBinder](#@InitBinder) <br/> 
+- [@InitBinder](#@InitBinder)
+
+- [서블릿 필터](#서블릿-필터)
+
+- [스프링 인터셉터](#스프링-인터셉터) 
 
 ***
 
@@ -870,4 +874,31 @@ public class EventValidator implements Validator {
 
 실무에서 HTTP 요청시 로그에 모두 같은 식별자를 남기고 싶다면 logback.mdc 를 이용하면 된다. 
   
-   
+***
+
+## 스프링 인터셉터 
+
+스프링 인터셉터도 서블릿 필터와 같이 웹과 관련된 공통 관심 사항을 효과적으로 해결할 수 있는 기술이다. 
+
+서블릿 필터는 서블릿이 제공하는 기술이라면, 스프링 인터셉터는 스프링 MVC 가 제공하는 기술이다. 
+
+인터셉터를 포함한 웹의 흐름은 다음과 같다. 
+
+- HTTP 요청 -> WAS -> 필터 -> 서블릿 -> 스프링 인터셉터 -> 컨트롤러  
+
+스프링 인터셉터를 이용해서 서블릿 필터와 같은 기능을 제공해줄 수 있다. 하지만 스프링 인터셉터가 더 정교한 기능을 제공해준다. 
+
+- 서블릿 필터의 경우 doFilter() 메소드만 지원을 해주는 반면에 스프링 인터셉터는 컨트롤러 호출 전 메소드인 preHandle(), 컨트롤러 호출 후 메소드인 postHandle(), 요청 완료 이후 메소드인 afterCompletion() 메소드
+등 단계적으로 잘 지원해준다. 
+
+- 인터셉터와 서블릿 필터의 순서에 대해서 좀 더 알아보자면 인터셉터의 afterCompletion() 이후에 서블릿 필터를 거쳐서 응답이 나간다.  
+
+  - preHandle() 은 핸들러 어댑터 전에 즉 컨트롤러 호출 전에 호출되고 여기서 true 를 리턴하면 다음으로 진행하지만 false 를 리턴하면 더는 진행하지 않는다.
+  
+  - postHandle() 은 컨트롤러 호출 후 즉 HandlerAdapter 가 컨트롤러 메소드를 호출 한 다음에 호출된다. 컨트롤러에서 예외가 발생되면 postHandle() 은 호출되지 않는다.
+  
+  - afterCompletion() 은 요청 완료 이후에 즉 뷰가 렌더링 된 이후에 호출된다. 컨트롤러에서 예외가 발생해도 afterCompletion() 은 호출된다. 어떤 예외가 났는지 알 수도 있다. 
+  
+  
+  
+  

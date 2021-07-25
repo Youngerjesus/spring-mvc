@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import javax.servlet.Filter;
 
 @Configuration
-public class WebConfig {
+public class FilterConfig {
 
     @Bean
     public FilterRegistrationBean logFilter() {
