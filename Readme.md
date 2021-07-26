@@ -55,6 +55,8 @@ https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc
 
 - [스프링 인터셉터](#스프링-인터셉터) 
 
+- [Bean Validation](#Validation)
+
 ***
 
 ## Spring MVC 전체 구조
@@ -899,6 +901,32 @@ public class EventValidator implements Validator {
   
   - afterCompletion() 은 요청 완료 이후에 즉 뷰가 렌더링 된 이후에 호출된다. 컨트롤러에서 예외가 발생해도 afterCompletion() 은 호출된다. 어떤 예외가 났는지 알 수도 있다. 
   
-  
-  
-  
+***
+
+## Validation 
+
+컨트롤러의 중요한 역할 중 하나는 HTTP 요청이 서버가 원하는 정상적인 요청인지 검증하는 것이다.
+
+주로 검증은 다음과 같다.
+
+- 타입 검증: 가격, 수량에 문자가 들어있으면 검증 오류를 처리하는 것이다.
+
+- 필드 검증: 공백이 있거나 값이 비어있으면 안된다던지, 어떤 수량의 제한 조건이 있는지 말하는 것이다.  
+
+검증은 클라이언트 검증과 서버 검증이 있을 수 있는데 클라이언트 검증만 한다면 조작을 할 수 있으므로 완벽하지 않고 서버만으로 검증을 한다면 즉각적인 피드백을 클라이언트에게 줄 수 없으므로 UX 가 떨어지는 문제가 생길 수 있다.
+그러므로 이 둘을 적절히 섞는게 중요하다.  
+
+이러한 검증은 Bean Validation 을 이용하면 에노테이션 기반으로 검증을 할 수 있어서 편하다. 
+
+- Bean Validation 을 위한 의존성 추가로 `spring-boot-starter-validation` 을 추가하면 된다.  
+이 의존성을 추가해두면 스프링 부트에서 `LocalValidatorFactoryBean` 이 글로벌 Validator 로 등록되고 그러므로 @Validated 에노테이션을 걸면 검증이 된다. 
+
+검증 에노테이션으로는 다음과 같다. 
+
+- `@NotBlank` : 빈값 + 공백만 있는 경우를 허용하지 않는다.
+
+- `@NotNull` : null 을 허용하지 않는다.
+
+- `@Range(min = 1000, max = 110000` : min ~ max 범위 안의 값이어야 한다. 
+
+- `@Max(9999)` : 최대값이 9999 까지만 포함한다.  
