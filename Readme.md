@@ -59,6 +59,8 @@ https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc
 
 - [타입 컨버터](#타입-컨버터) 
 
+- [Formatter](#Formatter) 
+
 ***
 
 ## Spring MVC 전체 구조
@@ -1089,3 +1091,110 @@ public class ConverterConfig implements WebMvcConfigurer {
     }
 }
 ```
+
+***
+
+## Formatter
+
+Converter 는 입력과 출력에 대한 타입 변환을 제공해주는 기능이라면 
+
+Formatter 는 객체를 특정한 포맷에 맞추어서 문자를 출력하거나 또는 그 반대의 역할을 하는 것이다. 
+
+Converter 가 객체 -> 객체에 사용하는 범용적인 느낌이라면 
+
+Formatter 는 문자에 특화되서 특정 Locale 정보에 맞춰서 정보를 출력하는 역할로 Converter 의 특수한 버전이라고 생각하면 된다. 
+
+#### Formatter 인터페이스 
+
+```java
+public interface Printer<T> {
+    String print(T object, Locale locale);
+}
+
+public interface Parser<T> {
+    T parse(String text, Locale locale) throws ParseException;
+}
+
+package org.springframework.format;
+
+public interface Formatter<T> extends Printer<T>, Parser<T> {
+
+}   
+```
+
+숫자 `1000` 을 문자 `1,000` 으로 출력해주는 포맷을 적용해보자. 그리고 그 반대로 처리해주는 포맷을 만들어보자. 
+
+````java
+@Slf4j
+public class MyNumberFormatter implements Formatter<Number> {
+    @Override
+    public Number parse(String s, Locale locale) throws ParseException {
+        log.info("text={}, locale={}", s, locale);
+        NumberFormat format = NumberFormat.getInstance(locale);
+        return format.parse(s);
+    }
+
+    @Override
+    public String print(Number number, Locale locale) {
+        log.info("number={}, locale={}", number, locale);
+        return NumberFormat.getInstance(locale).format(number);
+    }
+}
+````
+
+- `1,000` 같은 숫자 중간의 쉼표가 들어있는 형태의 문자 같은 경우는 자바에서 기본적으로 제공해주는 `NumberFormat` 을 이용하면 처리할 수 있다.
+
+- 이 객체에는 `Locale` 정보를 바탕으로 나라별로 다를 숫자 포맷을 만들어준다. 
+
+- parse() 메소드로 인해서 문자를 숫자로 변환해준다. 참고로 Number 는 Integer 와 Long 의 부모 클래스다. 
+
+- print() 메소드로 인해서 객체를 문자로 변환해준다.  
+
+스프링에서 컨버터를 등록해서 쓰는 `ConversionService` 에서는 컨버터와 포매터를 등록할 수 있다. 포매터는 특수한 버전인 컨버터일 뿐이므로 
+스프링에서는 Adapter 패턴을 이용해서 `Formatter` 가 `Converter` 처럼 동작하도록 한다. 
+
+그러므로 `convert()` 메소드를 이용해 Formatter 는 실행이 가능하다. 
+
+컨버터와 포매터를 같이 사용할 때 주의할 점은 컨버터가 포매터보다 먼저 실행이 되므로 같은 타입의 변환이 있다면 컨버터가 먼저 실행된다. 
+
+그리고 주의 할 점은 ConversionService 는 `RequestParam` 이나 `PathVariable` 그리고 `ModelAttribute` 와 같은 곳에 사용이 되지만
+
+`HttpMessageConverter` 에는 사용이 되지 않는다. `HttpMessageConverter` 는 HTTP 바디의 내용을 객체로 읽거나 갹채룰 HTTP 바디에 쓸 때
+주로 이용하므로 내부적으로 Jackson 같은 라이브러리르 쓰지 ConversionService 는 사용하지 않는다.
+
+따라서 HTTP 메시지 본문에 컨버터나 포맷터를 이용해서 변환시키고 싶다면 해당 라이브러리가 제공하는 설정을 통해서 바꿔주도록 해야한다. 
+ConversionService 에 등록을 한다고 변화하진 않는다. 
+
+다음과 같이 DateTime 에 대한 Formatter 를 Jackson 에 등록하는게 가능하다.
+ 
+```java
+@Configuration
+public class JacksonConfig {
+
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    @Bean
+    public ObjectMapper serializingObjectMapper(){
+        ObjectMapper objectMapper = new ObjectMapper();
+        JavaTimeModule javaTimeModule = new JavaTimeModule();
+        javaTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer());
+        javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer());
+        objectMapper.registerModule(javaTimeModule);
+        return objectMapper;
+    }
+
+    public static class LocalDateTimeSerializer extends JsonSerializer<LocalDateTime> {
+        @Override
+        public void serialize(LocalDateTime localDateTime, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+            jsonGenerator.writeString(localDateTime.format(FORMATTER));
+        }
+    }
+
+    public static class LocalDateTimeDeserializer extends JsonDeserializer<LocalDateTime> {
+        @Override
+        public LocalDateTime deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
+            return LocalDateTime.parse(jsonParser.getValueAsString(), FORMATTER);
+        }
+    }
+}
+``` 
