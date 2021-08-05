@@ -57,6 +57,8 @@ https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc
 
 - [Bean Validation](#Validation)
 
+- [타입 컨버터](#타입-컨버터) 
+
 ***
 
 ## Spring MVC 전체 구조
@@ -930,3 +932,160 @@ public class EventValidator implements Validator {
 - `@Range(min = 1000, max = 110000` : min ~ max 범위 안의 값이어야 한다. 
 
 - `@Max(9999)` : 최대값이 9999 까지만 포함한다.  
+
+***
+
+## 타입 컨버터 
+
+문자를 숫자로 변환하거나, 반대로 숫자를 문자로 변환해야 하는 경우 처럼 애플리케이션을 개발하다 보면 타입을 변환해야 하는 경우가 많다. 
+
+#### HelloController 에서 문자 타입을 숫자 타입으로 변경 
+
+```java
+@RestController
+public class HelloController {
+
+    @GetMapping("/hello-v1")
+    public String helloV1(HttpServletRequest request) {
+        String data = request.getParameter("data");
+        Integer intValue = Integer.valueOf(data);
+        System.out.println("intValue = " + intValue);
+        return "ok";
+    }
+}
+```
+
+#### 스프링 MVC 가 제공해주는 @RequestParam 을 이용하면 자동으로 타입변환을 해준다. 
+
+```java
+@GetMapping("/hello-v2")
+public String helloV2(@RequestParam Integer data) {
+    System.out.println("data = " + data);
+    return "ok";
+}
+```
+
+- @ModelAttribute 와 @PathVariable 도 타입 변환을 알아서 해준다. 
+
+스프링은 이렇게 알아서 타입 변환을 해주는 경우가 많다.
+
+스프링 MVC 의 요청외에도 프로퍼티의 값을 읽어오는 에노테이션인 @Value 에도 타입 변환이 들어가야하고 XML 에 넣은 스프링 빈 정보가 있을때도 타입 변환을 해야하며
+뷰를 렌더링 할때도 타입 변환이 필요하다. 
+
+하지만 만약에 개발자가 새로운 타입을 만들어서 변환하고 싶다면 어떻게 해야할까? 
+
+스프링은 확장 가능한 컨버터 인터페이스를 제공하고 이 컨버터 인터페이스를 구현해서 등록하면 다른 타입 변환에도 사용하는게 가능하다. 
+
+컨버터 인터페이스는 다음과 같이 있다. 
+
+```java
+package org.springframework.core.convert.converter;
+
+public interface Converter<S, T> {
+      T convert(S source);
+}
+```
+
+- 이 컨버터 인터페이스는 모든 타입에 적용하는게 가능하다. 
+
+- 예를 들어서 문자로 `true` 가 오면 Boolean 타입으로 받도록 할 수 있고 반대로 적용하고 싶으면 또 다른 컨번터를 만들어서 적용하면 된다. 
+컨버터는 단방항이기 떄문이다. 
+
+다음과 같이 컨버터를 만들 수 있다.  
+
+#### 문자 -> 숫자로 변환해주는 컨버터 
+
+```java
+@Slf4j
+public class StringToIntegerConverter implements Converter<String, Integer> {
+
+    @Override
+    public Integer convert(String s) {
+        log.info("converter source = " + s);
+        return Integer.valueOf(s);
+    }
+}
+```
+
+#### 숫자 -> 문자로 변환해주는 컨버터
+
+```java
+@Slf4j
+public class IntegerToStringConverter implements Converter<Integer, String> {
+
+    @Override
+    public String convert(Integer source) {
+        log.info("source = " + source);
+        return String.valueOf(source);
+    }
+}
+```
+
+#### 사용자 정의 컨버터 문자 -> IpPort 컨버터
+
+```java
+@Getter
+@EqualsAndHashCode
+public class IpPort {
+    private String ip;
+    private int port;
+
+    public IpPort(String ip, int port) {
+        this.ip = ip;
+        this.port = port;
+    }
+}
+
+@Slf4j
+public class StringToIpPortConverter implements Converter<String, IpPort> {
+
+    @Override
+    public IpPort convert(String source) {
+        log.info("convert source = " + source);
+        String[] split = source.split(":");
+        String ip = split[0];
+        int port = Integer.parseInt(split[1]);
+        return new IpPort(ip, port);
+    }
+}
+```
+> 참고로 스프링에서는 용도에 따라 다양한 방식의 컨버터를 제공해주기도 한다.
+> `Converter` 기본 타입 컨버터: 
+> `ConverterFactory` 전체 클래스 계층 구조가 필요로 할 때 사용된다. 
+> `GenericConverter` 정교한 구현이나 대상 필드의 에노테이션 정보를 사용 가능한 컨버터다. 
+> `ConditionalGenericConverter` 특정 조건이 참인 경우에 컨버터를 실행하는 컨버터다. 
+>
+> 좀 더 자세한 내용은 공식 문서를 보자. https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#core- convert   
+
+이렇게 만든 타입 컨버터를 매번 직접 찾아서 사용하기에는 불편하기 때문에 스프링에서는 컨버터를 모아둬서 그것들이 변환할 수 있다면 변환해주는 그런 서비스를 제공해주는데
+이게 `ConversionService` 라고 한다. 
+
+#### ConversionService 인터페이스 
+
+```java
+package org.springframework.core.convert;
+import org.springframework.lang.Nullable;
+        
+public interface ConversionService {
+    boolean canConvert(@Nullable Class<?> sourceType, Class<?> targetType);
+    boolean canConvert(@Nullable TypeDescriptor sourceType, TypeDescriptor targetType);
+    
+    <T> T convert(@Nullable Object source, Class<T> targetType);
+    
+    Object convert(@Nullable Object source, @Nullable TypeDescriptor sourceType, TypeDescriptor targetType);
+}
+``` 
+
+#### WebMvcConfigurer 를 통해서 컨버터를 동록하면 된다. 
+
+```java
+@Configuration
+public class ConverterConfig implements WebMvcConfigurer {
+    @Override
+    public void addFormatters(FormatterRegistry registry) {
+        registry.addConverter(new StringToIntegerConverter());
+        registry.addConverter(new IntegerToStringConverter());
+        registry.addConverter(new StringToIpPortConverter());
+    }
+}
+```
