@@ -61,6 +61,8 @@ https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc
 
 - [Formatter](#Formatter) 
 
+- [파일 업로드](#파일-업로드) 
+
 ***
 
 ## Spring MVC 전체 구조
@@ -1198,3 +1200,126 @@ public class JacksonConfig {
     }
 }
 ``` 
+
+***
+
+## 파일 업로드 
+
+일반적으로 HTML Form 을 통한 파일 업로드를 위해서는 HTML Form 전송 방식인 `application/x-www-form-urlencoded` 방식과 `multipart/form-data` 방식을 이해해야 한다. 
+
+
+#### application/x-www-form-urlencoded
+
+HTML Form 에서 서버로 전송하는 가장 기본적인 방법으로 Form 태그에 별도의 `enctype` 옵션이 없다면 웹 브라우저는 HTTP 헤더에 보내는 content-type 에 자동으로 application/x-www-form-urlencoded 로 데이터를 보낸다.
+  
+이 방식으로 보낼때 HTTP Request Body 에 데이터를 쓰게 되는데 데이터를 `&` 키워드로 문자로 구별해서 보내게 된다. 하지만 파일 업로드 같은 경우는 바이너리로 데이터를 보내야 하는 반면에 이름이나 나이 같은 정보는 문자로 보내야 한다. 즉 이를 동시에 전송하기 어려운 문제가 있다.  
+  
+#### multipart/form-data  
+
+일단 이 방식을 이용하기 위해서는 Form 태그에 별도로 `enctype="multipart/form-data"` 를 명시해야 한다. 
+
+이 방식은 폼과 함께 여러 파일을 같이 전송할 수 있다. (그래서 이름이 multipart 이다.)
+
+데이터를 보내는 HTTP 메시지를 보면 `Content-Disposition` 이라는 헤더가 추가로 들어와있고 여기에는 폼에서 보내는 일반적인 데이터들이 각각 분리되어 있다. (username, age, file)
+
+그리고 서버에서 `HttpServletRequest` 로 받을 때 `getParts()` 라는 메소드로 전송한 모든 데이터를 받을 수 있다.
+
+```java
+@Slf4j
+@Controller
+@RequestMapping("/servlet/v1")
+public class ServletUploadControllerV1 {
+    @GetMapping("/upload")
+    public String newFile() {
+        return "upload-form";
+    }
+    
+    @PostMapping("/upload")
+    public String saveFileV1(HttpServletRequest request) throws ServletException, IOException {
+        log.info("request={}", request);
+        String itemName = request.getParameter("itemName");
+        log.info("itemName={}", itemName);
+        Collection<Part> parts = request.getParts();
+        log.info("parts={}", parts);
+        return "upload-form";
+    } 
+}
+``` 
+
+- 그리고 추가로 application.properties 에 `logging.level.org.apache.coyote.http11=debug` 옵션을 걸면 HTTP 요청 메시지를 확인 하는게 가능하다. 
+
+다음과 같이 로그를 볼 수 있다. 
+
+```java
+Content-Type: multipart/form-data; boundary=----xxxx
+
+------xxxx
+  
+Content-Disposition: form-data; name="itemName"
+  
+Spring
+------xxxx
+  
+Content-Disposition: form-data; name="file"; filename="test.data"
+Content-Type: application/octet-stream 
+
+sdklajkljdf...
+
+```
+
+멀티파트를 사용할 때 큰 파일을 무제한 업로드 하게 둘 수는 없으므로 업로드 사이즈를 제한할 수 있다. 
+
+이때 사이즈를 넘으면 SizeLimitExceededException 이 발생한다. 
+
+다음과 같이 application.properties 에 설정하면 된다. 
+
+```properties
+spring.servlet.multipart.max-file-size=1MB
+spring.servlet.multipart.max-request-size=10MB
+```
+
+- max-file-size 는 기본 1MB 이다.
+
+- max-request-size 는 여러개의 파일을 한번에 multipart 로 보낼 수 있으므로 전체의 크기 제한이다. 기본 10MB 이다. 
+
+스프링 부트는 기본적으로 `spring.serlvet.multipart.enabled=true` 로 설정되어 있는데 이를 통해 기본적으로 서블릿 컨테이너에서 multipart 로 요청이 오면 MultipartResolver 에 의해 처리된다. 
+
+MultipartResolver 는 서블릿 컨테이너가 전달하는 일반적인 요청인 HttpServletRequest 를 HttpServletRequest 의 자식 인터페이스인 MultipartHttpServletRequest 로 변환해서 반환해주는데 
+이는 멀티파트와 관련해서 추가적인 기능을 제공해준다. 스프링에서는 MultipartHttpServletRequest 의 구현체인 StandardMultipartHttpServletRequest 를 반환해준다. 
+
+하지만 이후에 나올 MultipartFile 이라는 애로도 컨트롤러에서 요청을 받을 수 있고 얘가 더 편하기 떄문에 따로 MultipartHttpServletRequest 에 대해서는 설명하지 않겠다. 궁금하면 레퍼런스를 통해서 찾아보자. 
+
+MultipartFile 을 이용하려면 다음과 같이 사용하면 된다. 
+
+```java
+@Slf4j
+@RestController
+public class UploadController {
+
+    @PostMapping("/upload")
+    public String saveFile(@RequestParam String itemName,
+                           @RequestParam MultipartFile file,
+                           HttpServletRequest request) throws IOException {
+
+        log.info("request={}", request);
+        log.info("itemName={}", itemName);
+        log.info("multipartfile={}", file);
+
+        if (!file.isEmpty()) {
+            String fullPath = file.getOriginalFilename();
+            file.transferTo(new File(fullPath));
+        }
+
+        return "ok";
+    }
+}
+```
+
+- File.transfer() 메소드를 이용해서 파일을 저장하는게 가능하다. 
+
+- 그리고 파일을 업로드 할 때 고객이 업로드한 파일명으로 그래도 서버에 저장하면 안된다. 왜냐하면 서로 다른 고객이 같은 파일 이름을 사용하는
+경우도 있기 때문에 파일 충돌이 일어날 수 있다.   
+
+- MultipartFile 은 @RequestParam 에서도 사용할 수 있지만 @ModelAttribute 에서도 사용하는게 가능하다. 
+
+
