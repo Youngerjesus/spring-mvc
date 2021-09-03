@@ -63,6 +63,8 @@ https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc
 
 - [파일 업로드](#파일-업로드) 
 
+- [메세지 국제화](#메세지-국제화) 
+
 ***
 
 ## Spring MVC 전체 구조
@@ -1322,4 +1324,216 @@ public class UploadController {
 
 - MultipartFile 은 @RequestParam 에서도 사용할 수 있지만 @ModelAttribute 에서도 사용하는게 가능하다. 
 
+***
 
+## 메세지 국제화 
+
+메시지 국제화에서 메시지와 국제화 각각 이것이 무엇인지 살펴보자. 
+
+### 메시지란? 
+
+서버 사이드 렌더링에서 보이는 화면에 있는 단어들을 바꿔달라는 요구사항이 들어왔다고 생각해보자. 
+
+단어들을 바꾸기 위해서는 여러 페이지들을 찾아서 바꿔야 한다. 왜냐하면 '하드코딩' 되어있기 떄문이다. 
+
+이렇게 하드코딩 되어 있기 떄문에 변경 포인트가 여러개가 생긴다. 그렇게 하지말고 이런 다양한 메시지들을 한곳에 관리할 수 있도록 추상화된 객체를 만드는 기능을 메시지 기능이라고 한다. 
+
+이를 통해 DRY 원칙을 지킬 수 있고 OCP 를 따를 수 있다. 
+
+이런 메시지 기능은 다음과 같이 예로 `message.properties` 를 만들어서 해결할 수 있다. 
+
+```properties
+item=상품
+item.id=상품 ID
+item.itemName=상품명
+item.price=가격
+item.quantity=수량
+``` 
+
+그리고 각 HTML 은 다음과 같이 해당 데이터를 불러올 수 있다. (여기서는 thymeleaf 를 이용한 예이다.)
+
+```html
+<label for="itemName" th:text="#{item.itemName}"></label>
+```
+
+### 국제화란?
+
+메시지에서 한 걸음만 더 나아가면 국제화다. 
+
+메시지에서 설명한 메시지 파일 (message.properties) 를 각 나라별로 관리하면 국제화할 수 있다. 
+
+예를 들어서 다음과 같이 2개의 파일을 만들면 된다. 
+
+#### message_en.properties 
+
+```properties
+item=Item
+item.id=Item Id
+item.itemName=Item Name
+item.price=price
+item.quantity=quantity
+``` 
+
+#### message_ko.properties
+
+```properties
+item=상품
+item.id=상품 ID
+item.itemName=상품명
+item.price=가격
+item.quantity=수량
+```
+
+영어를 사용하는 사람이라면 `messgae_en.properties` 를 전달해주면 되고 한국어를 사용하는 사람이라면 `message_ko.properties` 전달해주면 된다. 
+
+이렇게 하면 국제화를 만들 수 있다. 
+
+그렇다면 사람들을 어떻게 구별할 수 있을까? 가장 기본적인 사용방법은 HTTP Header 에 있는 Accept-language 를 보고 판단하거나 사용자가 직접 언어를 선택할 수 있도록 하거나, 쿠키를 통해서 처리하면 된다. 
+
+메시지와 국제화 기능을 모두 직접 구현할 수 있겠지만 스프링에서는 이를 모두 제공한다. 
+
+지금부터 스프링에서 제공하는 메시지 관리 기능들을 모두 알아보자.
+
+### 스프링 메시지 소스 설정 
+
+스프링은 기본적으로 메시지 관리 기능을 제공한다. 
+
+메시지 관리 기능을 사용하려면 스프링이 제공하는 `MessageSource` 를 스프링 빈으로 등록하면 되는데 `MessageSource` 는 인터페이스이다. 
+
+따라서 구현체인 `ResourceBundleMessageSource` 를 스프링 빈으로 등록하면 된다. 
+
+즉 다음과 같이 직접 등록하면 된다. 
+
+```java
+@Bean 
+public MessageSource messageSource() {
+    ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+    messageSource.setBasenames("messages","errors");
+    messageSource.setDefaultEncoding("utf-8");
+    return messageSource;
+}
+```
+
+- 여기서 `basenames` 라는 건 설정 파일의 이름을 말한다.
+
+  - 이름을 `messages` 로 입력했기 때문에 `messages.properties` 파일을 읽어서 사용한다. 
+  
+  - 추가로 국제화 기능을 제공해주고 싶다면 `message_en.properties` 와 `message_ko.properties` 를 둘 다 입력해놓으면 된다. 국제화 파일이 없다면 `messages.properties` 를 기본으로 사용한다. 
+  
+  - 파일의 위치는 `resources/messages.properties` 이렇게 두면 된다. 
+  
+  - 여러 파일을 한꺼번에 지정하는게 가능한데 여기서는 `messages` 와 `errors` 두 파일 모두 등록했다.
+  
+- 참고로 스프링 부트를 사용하면 직접 빈으로 만들어서 등록하지 않아도 된다. 
+
+#### 스프링 부트 메시지 소스 설정 
+
+스프링 부트를 사용하면 다음과 같이 메시지 소스를 설정할 수 있다. 
+
+```properties
+spring.messages.basename=messages.config.i18n.messages
+```
+
+스프링 부트에서는 메시지 소스 기본값으로 `spring.message.basename=messages` 를 사용한다. 
+
+따라서 국제화를 사용하고 싶다면 그냥 다음과 같은 파일들을 추가해주면 된다. 
+
+- `messages.properties`
+
+- `messages_en.properties`
+
+- `messages_ko.properties`
+
+### 스프링 메시지 소스 사용 
+
+먼저 MessageSource 인터페이스를 한번 살펴보자. 
+
+```java
+public interface MessageSource {
+    @Nullable
+    String getMessage(String var1, @Nullable Object[] var2, @Nullable String var3, Locale var4); 
+    
+    // 첫번째 Parameter 는 찾을 메시지 프로퍼티 파일 이름을 말한다. 
+    String getMessage(String var1, @Nullable Object[] var2, Locale var3) throws NoSuchMessageException;
+
+    String getMessage(MessageSourceResolvable var1, Locale var2) throws NoSuchMessageException;
+}
+```
+
+스프링이 제공하는 메시지 소스를 어떻게 사용하는지 다양한 테스트 예를 보면서 파악해보자. 
+
+#### 기본적인 메시지 소스 사용 
+
+```java
+@SpringBootTest
+public class MessageSourceTest { 
+    @Autowired
+    MessageSource ms;
+      
+    @Test
+    void helloMessage() {
+        String result = ms.getMessage("hello", null, null); assertThat(result).isEqualTo("안녕");
+    } 
+}
+``` 
+
+- 여기서 locale 정보를 입력하지 않았으므로 스프링 부트의 기본 메시지 소스 값인 `messages.properties` 를 이용할 것이고 거기에 있는 `hello` 의 값을 읽어 올 것이다. 
+
+#### 메시지 소스에서 키 값을 찾지 못한 경우 
+
+```
+@Test
+void noFoundMessage(){
+    //given
+    //when
+    //then
+    assertThrows(NoSuchMessageException.class, () -> {
+        String result = ms.getMessage("no_code", null, null);
+    });
+}
+```
+
+- 이 경우에는 `NoSuchMessageException` 예외가 발생한다. 
+
+#### 메시지 소스에서 키 값을 찾지 못한 경우 - 기본값 사용 
+
+```java
+@Test
+void noFoundMessageButDefaultMessage(){
+    //given
+    String result = ms.getMessage("no_code", null, "기본 메시지", null);
+    //when
+    //then
+    assertEquals(result, "기본 메시지");
+}
+```
+- 키 값을 찾지 못하는 경우 기본 값을 사용하도록 할 수도 있다. 
+
+#### 국제화 파일 선택 
+
+메시지 소스에서 locale 정보를 바탕으로 국제화 파일을 선택할 수 있다. 
+
+locale 이 `en_US` 인 경우 `messages_en_US` -> `messages_en` -> `messages` 순서를 찾는다. 
+
+`locale` 에 맞추어 구체적인 것이 있으면 구체적인 것을 찾고 없으면 기본 값을 찾는다고 생각하면 된다. 
+
+사용 예는 위의 예 기준으로 `ms.getMessage("hello", null, Locale.KOREA)` 이런 식으로 사용하면 된다. 
+
+
+### LocaleResolver
+
+스프링은 기본적으로 HTTP Header 에 있는 Accept-Language 를 사용하지만 locale 선택 방식을 변경할 수도 있다. 
+
+사용할려면 LocaleResolver 인터페이스를 구현하고 등록시켜주면 된다. 
+
+LocaleResolver 의 인터페이스는 다음과 같다. 
+
+```java
+public interface LocaleResolver {
+    Locale resolveLocale(HttpServletRequest var1);
+
+    void setLocale(HttpServletRequest var1, @Nullable HttpServletResponse var2, @Nullable Locale var3);
+}
+```
+
+스프링 부트에서는 기본적으로 `AcceptHeaderLocaleResolver` 를 사용하기 때문에 HTTP Header 에 있는 `Accept-Language` 를 보고 파악한다. 
